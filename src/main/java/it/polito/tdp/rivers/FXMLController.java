@@ -11,6 +11,7 @@ import java.util.ResourceBundle;
 import it.polito.tdp.rivers.model.Flow;
 import it.polito.tdp.rivers.model.Model;
 import it.polito.tdp.rivers.model.River;
+import it.polito.tdp.rivers.model.SimulatorResults;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -57,21 +58,26 @@ public class FXMLController {
     
     @FXML
     void completaDati(ActionEvent event) {
-    	River river = boxRiver.getValue();
-    	List<Flow> flows = this.model.getDatiCompleti(river);
-    	if(flows == null) {
-    		txtResult.appendText("Dati non disponibili.");
-    	} else {
-    		txtStartDate.appendText(flows.get(0).getDay().toString());
-    		txtEndDate.appendText(flows.get(flows.size()-1).getDay().toString());
-    		txtNumMeasurements.appendText(""+flows.size());
-    		txtFMed.appendText(""+river.getFlowAvg());
+    	River newValue = boxRiver.getValue();
+    	if(newValue != null) {
+    		txtStartDate.setText(model.getStartDate(newValue).toString());
+    		txtEndDate.setText(model.getEndDate(newValue).toString());
+    		txtNumMeasurements.setText(String.valueOf(model.getNumMeasurements(newValue)));
+    		txtFMed.setText(String.format("%.3f", model.getFMed(newValue)));
     	}
     }
 
     @FXML
     void doSimula(ActionEvent event) {
-
+    	try {
+    		double k = Double.parseDouble(txtK.getText());
+    		SimulatorResults sr = model.simulate(boxRiver.getValue(), k);
+    		txtResult.setText("Numero di giorni critici: "+sr.getNumberOfDays() + "\n");
+    		txtResult.appendText("Occupazione media del bacino: "+(int)sr.getAvgC()+" m^3\n");
+    		txtResult.appendText("\nSIMULAZIONE TERMINATA\n");
+    	} catch(NumberFormatException nfe) {
+    		txtResult.setText("Devi inserire un valore numerico per il fattore k");
+    	}
     }
 
 
@@ -90,6 +96,6 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
-    	boxRiver.getItems().addAll(this.model.idMap.values());
+    	boxRiver.getItems().addAll(this.model.getRivers());
     }
 }
